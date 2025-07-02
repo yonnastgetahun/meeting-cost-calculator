@@ -1,5 +1,5 @@
-// 1. UPDATED LAYOUT.JS
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,8 +21,20 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        {/* Meta Pixel Code */}
-        <script
+        <noscript>
+          <img 
+            height="1" 
+            width="1" 
+            style={{display: 'none'}} 
+            src="https://www.facebook.com/tr?id=690959150421413&ev=PageView&noscript=1" 
+          />
+        </noscript>
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        {/* Meta Pixel Code using Next.js Script component */}
+        <Script
+          id="meta-pixel"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               !function(f,b,e,v,n,t,s)
@@ -43,18 +55,6 @@ export default function RootLayout({ children }) {
             `,
           }}
         />
-        <noscript>
-          <img 
-            height="1" 
-            width="1" 
-            style={{display: 'none'}} 
-            src="https://www.facebook.com/tr?id=690959150421413&ev=PageView&noscript=1" 
-          />
-        </noscript>
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
         {children}
       </body>
     </html>
