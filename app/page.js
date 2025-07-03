@@ -532,8 +532,23 @@ const MeetingCostCalculator = () => {
               <div>• That's {Math.round((isCustomMeeting ? calculations.allFrequencyCosts.weekly : calculations.recurring) / 150000)} senior engineers</div>
               <div>• Or {Math.round((isCustomMeeting ? calculations.allFrequencyCosts.weekly : calculations.recurring) / 100000)} product managers</div>
             </div>
-          </div>
-        )}
+
+    {/* Tally Survey Button */}
+    <div className="mt-6 text-center">
+      <a 
+        href="https://tally.so/r/wLjeWv" 
+        target="_blank"
+        className="inline-block bg-blue-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-600 transition-colors"
+        onClick={() => trackEvent('ValidationSurveyClick', { meeting_cost: calculations.total })}
+      >
+        📊 Help us build better solutions (2 min survey)
+      </a>
+      <p className="text-xs text-gray-600 mt-2">
+        Share your meeting frustrations so we can build better solutions
+      </p>
+    </div>
+  </div>
+)}
 
         {/* Email Capture CTA - Side Slide-in */}
         {shouldShowEmailCapture && !isSubmitted && (
