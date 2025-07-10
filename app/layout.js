@@ -1,4 +1,4 @@
-import { Inter } from "next/font/google";  // Changed from Geist
+import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
@@ -18,11 +18,6 @@ export const metadata = {
     email: false,
     address: false,
     telephone: false,
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
   },
   openGraph: {
     title: "Only 29% of Meetings Drive ROI - Calculate Your Meeting Costs",
@@ -46,6 +41,13 @@ export const metadata = {
       'max-snippet': -1,
     },
   },
+};
+
+// Separate viewport export (this is the fix!)
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({ children }) {
