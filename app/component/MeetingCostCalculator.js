@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Clock, DollarSign, AlertTriangle, Mail, CheckCircle, Users, Target, TrendingUp } from 'lucide-react';
-// Import tracking functions
-import { trackEvent, trackFirstEngagement, trackCalculatorUsage, trackEmailSignup } from '../utils/analytics';
+
+// Mock tracking functions for demo
+const trackEvent = (eventName, data) => console.log('Track:', eventName, data);
+const trackFirstEngagement = () => console.log('First engagement tracked');
+const trackCalculatorUsage = (data) => console.log('Calculator usage:', data);
+const trackEmailSignup = (email) => console.log('Email signup:', email);
 
 const MeetingCostCalculator = () => {
   const [selectedRoles, setSelectedRoles] = useState({
@@ -39,19 +43,30 @@ const MeetingCostCalculator = () => {
     'VP/Executive': { hourlyRate: 325, emoji: '👨🏽‍💼' }
   };
 
+  // Exit intent detection
+  useEffect(() => {
+    const handleExit = (e) => {
+      if (interactionCount > 0 && !isSubmitted && calculations.attendees > 0) {
+        setShowEmailCapture(true);
+        trackEvent('ExitIntentTriggered');
+      }
+    };
+    
+    document.addEventListener('mouseleave', handleExit);
+    return () => document.removeEventListener('mouseleave', handleExit);
+  }, [interactionCount, isSubmitted]);
+
   const updateRoleCount = (role, change) => {
-    // Track first interaction
     trackFirstEngagement();
     
     setSelectedRoles(prev => ({
       ...prev,
       [role]: Math.max(0, prev[role] + change)
     }));
-    setSelectedMeeting(null); // Clear preset meeting when customizing
+    setSelectedMeeting(null);
     setIsCustomMeeting(true);
-    setInteractionCount(prev => prev + 1); // Count custom interactions
+    setInteractionCount(prev => prev + 1);
     
-    // Track role selection activity
     trackEvent('RoleAdjusted', {
       role: role,
       change: change,
@@ -96,15 +111,13 @@ const MeetingCostCalculator = () => {
       monthly: 12
     };
 
-    // Smart defaults based on meeting type
     let defaultFrequency = frequency;
     if (selectedMeeting === 'standup') defaultFrequency = 'daily';
     else if (selectedMeeting === 'sync') defaultFrequency = 'weekly';
-    else if (selectedMeeting === 'demo') defaultFrequency = 'biweekly'; // Default to biweekly for demo prep
+    else if (selectedMeeting === 'demo') defaultFrequency = 'biweekly';
 
     const recurringCost = Math.round(totalCost * frequencyMultipliers[defaultFrequency]);
 
-    // For custom meetings, calculate all frequencies
     const allFrequencyCosts = {
       daily: Math.round(totalCost * 250),
       weekly: Math.round(totalCost * 52),
@@ -124,10 +137,8 @@ const MeetingCostCalculator = () => {
     };
   }, [selectedRoles, duration, frequency, selectedMeeting]);
 
-  // Track when calculation results change (when user gets results)
-  React.useEffect(() => {
+  useEffect(() => {
     if (calculations.total > 0 && calculations.attendees > 0) {
-      // Track calculator usage with detailed data
       trackCalculatorUsage({
         meeting_type: selectedMeeting || 'custom',
         attendee_count: calculations.attendees,
@@ -153,7 +164,7 @@ const MeetingCostCalculator = () => {
     return 'over_5000';
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (calculations.attendees === 0) {
       setShowRecurring(false);
       setSelectedMeeting(null);
@@ -161,8 +172,7 @@ const MeetingCostCalculator = () => {
     }
   }, [calculations.attendees]);
 
-  // Auto-scroll to results when calculation is made
-  React.useEffect(() => {
+  useEffect(() => {
     if (calculations.total > 0 && selectedMeeting) {
       setTimeout(() => {
         const resultsElement = document.getElementById('calculation-results');
@@ -178,61 +188,31 @@ const MeetingCostCalculator = () => {
   }, [calculations.total, selectedMeeting]);
 
   const handleEmailSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     
-    // Track email signup attempt
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid email address');
+      return;
+    }
+    
     trackEmailSignup(email);
     
-    try {
-      const response = await fetch('/api/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email,
-          calculationData: {
-            total: calculations.total,
-            attendees: calculations.attendees,
-            duration,
-            recurring: showRecurring ? calculations.recurring : null,
-            frequency: showRecurring ? frequency : null
-          }
-        }),
-      });
-
-      if (response.ok) {
-        setIsSubmitted(true);
-        setShowThankYou(true);
-        
-        // Track successful signup
-        trackEvent('EmailCaptureSuccess', {
-          email_domain: email.split('@')[1],
-          signup_context: 'calculator_results',
-          calculated_cost: calculations.total
-        });
-        
-        // Hide thank you message after 5 seconds
-        setTimeout(() => {
-          setShowThankYou(false);
-        }, 5000);
-      } else {
-        alert('Something went wrong. Please try again.');
-        trackEvent('EmailCaptureError', {
-          error_type: 'api_error'
-        });
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Something went wrong. Please try again.');
-      trackEvent('EmailCaptureError', {
-        error_type: 'network_error'
-      });
-    }
+    // Mock API call for demo
+    setIsSubmitted(true);
+    setShowThankYou(true);
+    
+    trackEvent('EmailCaptureSuccess', {
+      email_domain: email.split('@')[1],
+      signup_context: 'calculator_results',
+      calculated_cost: calculations.total
+    });
+    
+    setTimeout(() => {
+      setShowThankYou(false);
+    }, 5000);
   };
 
   const handlePresetMeeting = (meetingType, roles, duration, meetingName) => {
-    // Track first engagement
     trackFirstEngagement();
     
     setSelectedRoles(roles);
@@ -241,7 +221,6 @@ const MeetingCostCalculator = () => {
     setInteractionCount(prev => prev + 1);
     setIsCustomMeeting(false);
     
-    // Track preset meeting selection
     trackEvent('PresetMeetingSelected', {
       meeting_type: meetingType,
       meeting_name: meetingName,
@@ -251,7 +230,6 @@ const MeetingCostCalculator = () => {
   };
 
   const handleDurationChange = (newDuration) => {
-    // Track engagement on duration change
     if (calculations.attendees > 0) {
       trackFirstEngagement();
     }
@@ -261,7 +239,6 @@ const MeetingCostCalculator = () => {
       setInteractionCount(prev => prev + 1);
     }
     
-    // Track duration adjustment
     trackEvent('DurationChanged', {
       new_duration: newDuration,
       previous_duration: duration,
@@ -269,13 +246,12 @@ const MeetingCostCalculator = () => {
     });
   };
 
-  const shouldShowEmailCapture = calculations.total > 1000 && !isSubmitted && interactionCount >= 2 && calculations.attendees > 0;
+  // Updated email capture trigger - removed cost threshold
+  const shouldShowEmailCapture = !isSubmitted && interactionCount > 0 && calculations.attendees > 0;
 
-  // Track when email capture becomes visible
-  React.useEffect(() => {
+  useEffect(() => {
     if (shouldShowEmailCapture) {
       trackEvent('EmailCaptureShown', {
-        trigger_cost: calculations.total,
         trigger_interactions: interactionCount
       });
     }
@@ -283,7 +259,22 @@ const MeetingCostCalculator = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section - ROI Focused */}
+      {/* Sticky top CTA bar */}
+      {interactionCount > 0 && !isSubmitted && (
+        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-purple-600 py-2 z-50">
+          <div className="max-w-sm mx-auto text-white text-center">
+            <span className="font-bold">🔓 Unlock full report + facilitation templates</span>
+            <button 
+              onClick={() => setShowEmailCapture(true)}
+              className="ml-2 bg-yellow-400 text-gray-900 px-3 py-1 rounded text-sm font-bold"
+            >
+              Get Access
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Hero Section */}
       <div className="bg-gradient-to-br from-red-500 to-orange-400 px-4 py-3">
         <div className="max-w-sm mx-auto text-center text-white">
           <h1 className="text-xl font-bold mb-2 leading-tight">
@@ -295,16 +286,13 @@ const MeetingCostCalculator = () => {
           <div className="bg-white/20 backdrop-blur rounded-lg p-2 text-xs mb-1">
             <p className="font-medium">🎯 For Leaders & IC Top Performers Fighting Meeting Overload</p>
           </div>
-          <p className="text-xs text-orange-200">
-            (calculations based on FAANG+ salaries)
-          </p>
         </div>
       </div>
 
       {/* Calculator Section */}
       <div className="px-4 py-6 max-w-sm mx-auto">
         
-        {/* Quick Start Buttons - Horizontal Thumb-Friendly */}
+        {/* Quick Start Buttons */}
         <div className="mb-6">
           <h2 className="text-base font-bold mb-3 text-center text-gray-900">
             💰 Quick Start: High-Investment Meetings
@@ -365,7 +353,7 @@ const MeetingCostCalculator = () => {
           </div>
         </div>
 
-        {/* Role Selection - Brand Colors Applied */}
+        {/* Role Selection */}
         <div className="mb-6">
           <h3 className="font-bold mb-3 text-gray-900">Or customize your meeting:</h3>
           <div className="space-y-3">
@@ -400,7 +388,7 @@ const MeetingCostCalculator = () => {
           </div>
         </div>
 
-        {/* Duration - Brand Colors Applied */}
+        {/* Duration */}
         <div className="mb-6">
           <h3 className="font-bold mb-3 text-gray-900">⏱️ Meeting Duration</h3>
           <div className="grid grid-cols-2 gap-2 mb-3">
@@ -421,11 +409,9 @@ const MeetingCostCalculator = () => {
           </div>
         </div>
 
-        {/* Results - Mobile Optimized with ID for scrolling */}
+        {/* Results */}
         {calculations.attendees > 0 && (
           <div id="calculation-results" className="space-y-4 mb-6 pt-4">
-            
-            {/* Shock Value - Brand Colors Applied */}
             <div className="text-center p-6 rounded-xl text-white" style={{ background: 'linear-gradient(135deg, #FF6B6B, #FF8E53)' }}>
               <div className="text-3xl font-bold mb-1">
                 ${calculations.total.toLocaleString()}
@@ -450,7 +436,7 @@ const MeetingCostCalculator = () => {
               </div>
             </div>
 
-            {/* Breakdown - Brand Colors Applied */}
+            {/* Cost Breakdown */}
             <div className="space-y-3">
               <div className="flex justify-between items-center p-3 rounded-lg border-l-4" style={{ backgroundColor: '#B5EAD7', borderLeftColor: '#1A1C33' }}>
                 <div>
@@ -483,7 +469,7 @@ const MeetingCostCalculator = () => {
               </div>
             </div>
 
-            {/* Auto-Recurring Costs */}
+            {/* Recurring Costs */}
             {selectedMeeting && !isCustomMeeting && (
               <div className="rounded-lg p-4 text-white text-center" style={{ background: 'linear-gradient(135deg, #FF6B6B, #D32F2F)' }}>
                 <div className="text-2xl font-bold">
@@ -494,15 +480,10 @@ const MeetingCostCalculator = () => {
                                calculations.defaultFrequency === 'weekly' ? 'Weekly' :
                                calculations.defaultFrequency === 'biweekly' ? 'Twice monthly' : 'Monthly'})
                 </div>
-                {selectedMeeting === 'demo' && (
-                  <div className="mt-2 text-xs text-red-300">
-                    Monthly: ${Math.round(calculations.total * 12).toLocaleString()}/year
-                  </div>
-                )}
               </div>
             )}
 
-            {/* Custom Meeting - All Frequency Options */}
+            {/* Custom Meeting Frequencies */}
             {isCustomMeeting && calculations.total > 0 && (
               <div className="space-y-3">
                 <h4 className="font-bold text-center text-gray-900 mb-3">Annual Cost by Frequency:</h4>
@@ -526,76 +507,80 @@ const MeetingCostCalculator = () => {
               </div>
             )}
 
-            
+            {/* Perspective */}
             <div className="text-xs text-gray-600 bg-yellow-50 p-3 rounded border mt-4">
               <div className="font-medium text-yellow-800 mb-1">💡 Put this in perspective:</div>
               <div>• That's {Math.round((isCustomMeeting ? calculations.allFrequencyCosts.weekly : calculations.recurring) / 150000)} senior engineers</div>
               <div>• Or {Math.round((isCustomMeeting ? calculations.allFrequencyCosts.weekly : calculations.recurring) / 100000)} product managers</div>
             </div>
 
-    {/* Tally Survey Button */}
-    <div className="mt-6 text-center">
-      <a 
-        href="https://tally.so/r/wLjeWv" 
-        target="_blank"
-        className="inline-block bg-blue-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-600 transition-colors"
-        onClick={() => trackEvent('ValidationSurveyClick', { meeting_cost: calculations.total })}
-      >
-        📊 Help us build better solutions (2 min survey)
-      </a>
-      <p className="text-xs text-gray-600 mt-2">
-        Share your meeting frustrations so we can build better solutions
-      </p>
-    </div>
-  </div>
-)}
+            {/* Survey Button */}
+            <div className="mt-6 text-center">
+              <a 
+                href="https://tally.so/r/wLjeWv" 
+                target="_blank"
+                className="inline-block bg-blue-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-600 transition-colors"
+                onClick={() => trackEvent('ValidationSurveyClick', { meeting_cost: calculations.total })}
+              >
+                📊 Help us build better solutions (2 min survey)
+              </a>
+              <p className="text-xs text-gray-600 mt-2">
+                Share your meeting frustrations so we can build better solutions
+              </p>
+            </div>
+          </div>
+        )}
 
-        {/* Email Capture CTA - Side Slide-in */}
+        {/* Email Capture Modal */}
         {shouldShowEmailCapture && !isSubmitted && (
           <div className="fixed bottom-4 left-4 right-4 z-50">
             <div className="bg-white border shadow-xl rounded-lg p-4 max-w-sm mx-auto">
               <div className="text-center mb-3">
-                <h3 className="font-bold text-base" style={{ color: '#1A1C33' }}>✋ Stop being the calendar victim.</h3>
-                <h3 className="font-bold text-base mb-2" style={{ color: '#FF6B6B' }}>🚀 Start being the clarity driver.</h3>
-                <p className="text-xs text-gray-600">📘 Free Guide: How to design, run and manage meetings like a facilitator pro so your team and you have momentum</p>
+                <h3 className="font-bold text-base" style={{ color: '#1A1C33' }}>🚀 Get Your Free Facilitation Kit</h3>
+                <p className="text-xs text-gray-600">
+                  Perfect for anyone running meetings: <br/>
+                  • 5 Meeting Templates That Save 42% Time <br/>
+                  • ROI Calculator Spreadsheet <br/>
+                   • Facilitation Best Practices Guide
+                </p>
               </div>
-              <form onSubmit={handleEmailSubmit} className="space-y-2">
+              <div className="space-y-2">
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={() => trackFirstEngagement()}
-                  placeholder="your.email@company.com"
+                  placeholder="your@email.com"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:border-transparent"
-                  style={{ focusRingColor: '#FF6B6B' }}
                   required
                 />
                 <button
-                  type="submit"
+                  onClick={handleEmailSubmit}
                   className="w-full py-2 text-white rounded-lg font-bold text-sm transition-colors hover:opacity-90"
                   style={{ backgroundColor: '#FF6B6B' }}
+                  disabled={!email || !email.includes('@')}
                 >
-                  Get Guide
+                  Get Instant Access
                 </button>
-              </form>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Thank You State - Updated Message */}
+        {/* Thank You Message */}
         {showThankYou && (
           <div className="fixed bottom-4 left-4 right-4 z-50">
             <div className="text-white rounded-lg p-4 max-w-sm mx-auto text-center" style={{ backgroundColor: '#1A1C33' }}>
               <CheckCircle className="mx-auto h-6 w-6 mb-2" style={{ color: '#B5EAD7' }} />
               <h3 className="font-bold">Check your email!</h3>
-              <p className="text-sm text-gray-300">Your meeting facilitation guide is on the way.</p>
+              <p className="text-sm text-gray-300">Your Facilitation Kit is on the way.</p>
               <p className="text-xs text-gray-400 mt-1">Please check your spam folder.</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Social Proof / Trust Indicators */}
+      {/* Social Proof */}
       <div className="px-4 py-6 bg-gray-50">
         <div className="max-w-sm mx-auto text-center">
           <p className="text-sm text-gray-600 mb-4">Trusted by product leaders at:</p>

@@ -23,4 +23,15 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17"
   }
+    "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "lucide-react": "^0.263.1"
+  },
+  "devDependencies": {
+    "tailwindcss": "latest",
+    "postcss": "latest",
+    "autoprefixer": "latest"
+  }
 }
