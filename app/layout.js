@@ -1,20 +1,51 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";  // Changed from Geist
 import Script from "next/script";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: 'swap',
 });
 
 export const metadata = {
-  title: "Meeting Cost Calculator",
-  description: "Calculate what meetings are really costing your team.",
+  title: "Meeting Cost Calculator | See What Meetings Really Cost",
+  description: "71% of meetings waste money & burn out teams. Calculate the true cost of your meetings including context switching and lost deep work. Free facilitation templates included.",
+  keywords: "meeting cost calculator, meeting ROI, productivity, meeting efficiency, facilitation tools, team meetings",
+  authors: [{ name: "Your Facilitation Company" }],
+  creator: "Your Facilitation Company",
+  publisher: "Your Facilitation Company",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
+  openGraph: {
+    title: "Only 29% of Meetings Drive ROI - Calculate Your Meeting Costs",
+    description: "Discover the hidden costs of meetings including context switching and lost productivity. Get free facilitation templates.",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Meeting Cost Calculator - What Are Meetings Really Costing?",
+    description: "Calculate the true cost of meetings including hidden productivity losses",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default function RootLayout({ children }) {
@@ -30,7 +61,7 @@ export default function RootLayout({ children }) {
           />
         </noscript>
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${inter.className} antialiased`}>
         {/* Meta Pixel Code using Next.js Script component */}
         <Script
           id="meta-pixel"
@@ -52,6 +83,13 @@ export default function RootLayout({ children }) {
               window.sessionStartTime = Date.now();
               window.calculatorUsageCount = 0;
               window.hasEngaged = false;
+              
+              // Add custom event tracking helper
+              window.trackCustomEvent = function(eventName, params) {
+                if (window.fbq) {
+                  window.fbq('trackCustom', eventName, params);
+                }
+              };
             `,
           }}
         />
