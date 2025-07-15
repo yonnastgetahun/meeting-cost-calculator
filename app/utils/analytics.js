@@ -1,117 +1,157 @@
-import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
-import "./globals.css";
+/**
+ * Analytics utility functions for Meeting Cost Calculator
+ * Tracks events to both Google Analytics 4 and Meta Pixel
+ */
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata = {
-  title: "Meeting Cost Calculator | See What Meetings Really Cost",
-  description: "71% of meetings waste money & burn out teams. Calculate the true cost of your meetings including context switching and lost deep work. Free facilitation templates included.",
-  keywords: "meeting cost calculator, meeting ROI, productivity, meeting efficiency, facilitation tools, team meetings",
-  authors: [{ name: "Your Facilitation Company" }],
-  creator: "Your Facilitation Company",
-  publisher: "Your Facilitation Company",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
-  // OpenGraph metadata without specific domain
-  openGraph: {
-    title: "Only 29% of Meetings Drive ROI - Calculate Your Meeting Costs",
-    description: "Discover the hidden costs of meetings including context switching and lost productivity. Get free facilitation templates.",
-    type: "website",
-    locale: "en_US",
-    // Add these when you have a domain:
-    // url: "https://yourdomain.com",
-    // siteName: "Meeting Cost Calculator",
-    // images: [{
-    //   url: "https://yourdomain.com/og-image.png",
-    //   width: 1200,
-    //   height: 630,
-    //   alt: "Meeting Cost Calculator Preview",
-    // }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Meeting Cost Calculator - What Are Meetings Really Costing?",
-    description: "Calculate the true cost of meetings including hidden productivity losses",
-    // Add when you have domain:
-    // images: ["https://yourdomain.com/twitter-image.png"],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
+// Main event tracking function
+export const trackEvent = (eventName, params = {}) => {
+  if (typeof window !== 'undefined' && window.trackAnalytics) {
+    window.trackAnalytics(eventName, params);
+  }
 };
 
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <head>
-        <noscript>
-          <img 
-            height="1" 
-            width="1" 
-            style={{display: 'none'}} 
-            src="https://www.facebook.com/tr?id=690959150421413&ev=PageView&noscript=1" 
-          />
-        </noscript>
-      </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {/* Meta Pixel Code using Next.js Script component */}
-        <Script
-          id="meta-pixel"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '690959150421413'); 
-              fbq('track', 'PageView');
-              
-              // Track page load time and setup session tracking
-              window.sessionStartTime = Date.now();
-              window.calculatorUsageCount = 0;
-              window.hasEngaged = false;
-              
-              // Add custom event tracking helper
-              window.trackCustomEvent = function(eventName, params) {
-                if (window.fbq) {
-                  window.fbq('trackCustom', eventName, params);
-                }
-              };
-            `,
-          }}
-        />
-        {children}
-      </body>
-    </html>
-  );
-}
+// Track when calculator is started
+export const trackCalculatorStart = () => {
+  if (typeof window !== 'undefined' && window.trackCalculatorStart) {
+    window.trackCalculatorStart();
+  }
+};
+
+// Track when calculation is completed
+export const trackCalculatorComplete = (meetingCost, attendees, duration) => {
+  if (typeof window !== 'undefined' && window.trackCalculatorComplete) {
+    window.trackCalculatorComplete(meetingCost, attendees, duration);
+  }
+};
+
+// Track user engagement
+export const trackEngagement = (action, label) => {
+  if (typeof window !== 'undefined' && window.trackEngagement) {
+    window.trackEngagement(action, label);
+  }
+};
+
+// Track specific calculator interactions
+export const trackInteraction = (interactionType, details = {}) => {
+  trackEvent(`calculator_${interactionType}`, {
+    event_category: 'calculator_interaction',
+    event_label: interactionType,
+    ...details
+  });
+};
+
+// Track form field changes
+export const trackFieldChange = (fieldName, value) => {
+  trackEvent('field_changed', {
+    event_category: 'calculator',
+    event_label: fieldName,
+    field_value: value
+  });
+};
+
+// Track calculator errors
+export const trackError = (errorType, errorMessage) => {
+  trackEvent('calculator_error', {
+    event_category: 'error',
+    event_label: errorType,
+    error_message: errorMessage
+  });
+};
+
+// Track CTA clicks
+export const trackCTAClick = (ctaName, ctaLocation) => {
+  trackEvent('cta_clicked', {
+    event_category: 'conversion',
+    event_label: ctaName,
+    cta_location: ctaLocation
+  });
+};
+
+// Track template downloads
+export const trackTemplateDownload = (templateName) => {
+  trackEvent('template_downloaded', {
+    event_category: 'conversion',
+    event_label: templateName,
+    value: 1
+  });
+};
+
+// Track social shares
+export const trackSocialShare = (platform, meetingCost) => {
+  trackEvent('social_share', {
+    event_category: 'engagement',
+    event_label: platform,
+    shared_cost: Math.round(meetingCost)
+  });
+};
+
+// Track calculator reset
+export const trackCalculatorReset = () => {
+  trackEvent('calculator_reset', {
+    event_category: 'calculator',
+    event_label: 'reset_clicked'
+  });
+};
+
+// Track advanced options toggle
+export const trackAdvancedOptions = (isOpen) => {
+  trackEvent('advanced_options_toggled', {
+    event_category: 'calculator',
+    event_label: isOpen ? 'opened' : 'closed'
+  });
+};
+
+// Track calculation method change (if you have multiple calculation types)
+export const trackCalculationMethod = (method) => {
+  trackEvent('calculation_method_changed', {
+    event_category: 'calculator',
+    event_label: method
+  });
+};
+
+// Track ConvertKit form interactions
+export const trackConvertKitInteraction = (action, formLocation) => {
+  trackEvent('convertkit_interaction', {
+    event_category: 'lead_generation',
+    event_label: action,
+    form_location: formLocation
+  });
+};
+
+// Track ConvertKit form submission
+export const trackConvertKitSubmission = (formLocation) => {
+  trackEvent('convertkit_form_submitted', {
+    event_category: 'conversion',
+    event_label: 'email_signup',
+    form_location: formLocation,
+    value: 1
+  });
+};
+
+// Helper to safely get numeric values
+const safeNumber = (value) => {
+  const num = parseFloat(value);
+  return isNaN(num) ? 0 : num;
+};
+
+// Track detailed calculation data
+export const trackDetailedCalculation = (calculationData) => {
+  const {
+    attendees,
+    duration,
+    averageHourlyRate,
+    totalCost,
+    includesContextSwitching,
+    includesOpportunityCost
+  } = calculationData;
+
+  trackEvent('detailed_calculation', {
+    event_category: 'calculator',
+    value: Math.round(safeNumber(totalCost)),
+    attendees: safeNumber(attendees),
+    duration_minutes: safeNumber(duration),
+    hourly_rate: Math.round(safeNumber(averageHourlyRate)),
+    context_switching: includesContextSwitching ? 'yes' : 'no',
+    opportunity_cost: includesOpportunityCost ? 'yes' : 'no'
+  });
+};

@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,7 +44,7 @@ export const metadata = {
   },
 };
 
-// Separate viewport export (this is the fix!)
+// Separate viewport export
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -86,7 +87,7 @@ export default function RootLayout({ children }) {
               window.calculatorUsageCount = 0;
               window.hasEngaged = false;
               
-              // Add custom event tracking helper
+              // Add custom event tracking helper for Meta
               window.trackCustomEvent = function(eventName, params) {
                 if (window.fbq) {
                   window.fbq('trackCustom', eventName, params);
@@ -95,7 +96,76 @@ export default function RootLayout({ children }) {
             `,
           }}
         />
+        
+        {/* Google Analytics 4 Integration */}
+        <Script
+          id="google-analytics-config"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Initialize analytics tracking helpers
+              window.trackAnalytics = function(eventName, params) {
+                // Track to both GA4 and Meta Pixel
+                if (window.gtag) {
+                  window.gtag('event', eventName, params);
+                }
+                if (window.fbq) {
+                  window.fbq('trackCustom', eventName, params);
+                }
+              };
+              
+              // Specific calculator tracking functions
+              window.trackCalculatorStart = function() {
+                window.calculatorUsageCount++;
+                window.trackAnalytics('calculator_started', {
+                  event_category: 'calculator',
+                  event_label: 'meeting_cost',
+                  usage_count: window.calculatorUsageCount
+                });
+              };
+              
+              window.trackCalculatorComplete = function(meetingCost, attendees, duration) {
+                window.trackAnalytics('calculation_completed', {
+                  event_category: 'calculator',
+                  event_label: 'meeting_cost',
+                  value: Math.round(meetingCost),
+                  meeting_attendees: attendees,
+                  meeting_duration: duration,
+                  currency: 'USD'
+                });
+              };
+              
+              window.trackEngagement = function(action, label) {
+                if (!window.hasEngaged) {
+                  window.hasEngaged = true;
+                  window.trackAnalytics('first_engagement', {
+                    event_category: 'engagement',
+                    event_label: action
+                  });
+                }
+                window.trackAnalytics(action, {
+                  event_category: 'engagement',
+                  event_label: label || 'meeting_calculator'
+                });
+              };
+              
+              // Track time on page when leaving
+              window.addEventListener('beforeunload', function() {
+                const timeSpent = Math.round((Date.now() - window.sessionStartTime) / 1000);
+                window.trackAnalytics('time_on_calculator', {
+                  event_category: 'engagement',
+                  value: timeSpent,
+                  calculations_performed: window.calculatorUsageCount
+                });
+              });
+            `,
+          }}
+        />
+        
         {children}
+        
+        {/* Google Analytics 4 - Using environment variable */}
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
       </body>
     </html>
   );
