@@ -12,24 +12,37 @@ export const metadata = {
   title: "Meeting Cost Calculator | See What Meetings Really Cost",
   description: "71% of meetings waste money & burn out teams. Calculate the true cost of your meetings including context switching and lost deep work. Free facilitation templates included.",
   keywords: "meeting cost calculator, meeting ROI, productivity, meeting efficiency, facilitation tools, team meetings",
-  authors: [{ name: "Your Facilitation Company" }],
-  creator: "Your Facilitation Company",
-  publisher: "Your Facilitation Company",
+  authors: [{ name: "PulseCollab Agency" }],
+  creator: "PulseCollab Agency",
+  publisher: "PulseCollab Agency",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' }
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+    ]
   },
   openGraph: {
     title: "Only 29% of Meetings Drive ROI - Calculate Your Meeting Costs",
     description: "Discover the hidden costs of meetings including context switching and lost productivity. Get free facilitation templates.",
     type: "website",
     locale: "en_US",
+    url: "https://cal.pulsecollabagency.com",
+    siteName: "PulseCollab Meeting Cost Calculator",
   },
   twitter: {
     card: "summary_large_image",
     title: "Meeting Cost Calculator - What Are Meetings Really Costing?",
     description: "Calculate the true cost of meetings including hidden productivity losses",
+    site: "@pulsecollabagency", // Add your Twitter handle if you have one
   },
   robots: {
     index: true,
